@@ -1,29 +1,40 @@
-#!/usr/bin/env python3
-"""BaseCaching Caching System"""
+#!/usr/bin/python3
+"""LRUCache module
+"""
 from base_caching import BaseCaching
 
 
 class LRUCache(BaseCaching):
-    """BaseCaching Caching System"""
-
-    def __init__(self) -> None:
-        """BaseCaching Caching System"""
+    """LRUCache class
+    Args:
+        BaseCaching (class): Basic class for this class
+    """
+    def __init__(self):
         super().__init__()
+        self.__keys = []
 
     def put(self, key, item):
-        """BaseCaching Caching System"""
+        """put item into cache_data with LIFO algorithm
+        Args:
+            key ([type]): key of dictionary
+            item ([type]): item to insert in dictionary
+        """
+        if len(self.cache_data) == self.MAX_ITEMS and key not in self.__keys:
+            discard = self.__keys.pop(0)
+            del self.cache_data[discard]
+            print('DISCARD: {}'.format(discard))
         if key and item:
+            if key in self.cache_data:
+                self.__keys.remove(key)
+            self.__keys.append(key)
             self.cache_data[key] = item
-            if len(self.cache_data) > BaseCaching.MAX_ITEMS:
-                firt = list(self.cache_data.keys())[0]
-                print(f"DISCARD: {firt}")
-                del(self.cache_data[firt])
 
     def get(self, key):
-        """BaseCaching Caching System"""
-        if key is not None:
-            for k, v in self.cache_data.items():
-                if k == key:
-                    return v
-        return None
-        
+        """get value of cache_data dictionary
+        Args:
+            key ([type]): key to search into cache_data
+        """
+        if not key or key not in self.cache_data:
+            return None
+        self.__keys.remove(key)
+        self.__keys.append(key)
