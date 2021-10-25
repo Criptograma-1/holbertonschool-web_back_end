@@ -22,4 +22,3 @@ class BasicCache(BaseCaching):
                 if k == key:
                     return v
         return None
-    
