@@ -1,4 +1,4 @@
-##!/usr/bin/env python3
+#!/usr/bin/env python3
 """ Module of Index views
 """
 from flask import jsonify, abort
@@ -42,4 +42,3 @@ def forbidden() -> str:
       - raise 403 error
     """
     abort(403)
-    
