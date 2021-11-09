@@ -6,14 +6,12 @@ from os import getenv
 from api.v1.views import app_views
 from flask import Flask, jsonify, abort, request
 from flask_cors import (CORS, cross_origin)
-import os
 
 
 app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 auth = None
-
 if getenv('AUTH_TYPE') == 'auth':
     from api.v1.auth.auth import Auth
     auth = Auth()
@@ -23,22 +21,25 @@ elif getenv('AUTH_TYPE') == 'basic_auth':
 elif getenv('AUTH_TYPE') == 'session_auth':
     from api.v1.auth.session_auth import SessionAuth
     auth = SessionAuth()
+elif getenv('AUTH_TYPE') == 'session_exp_auth':
+    from api.v1.auth.session_exp_auth import SessionExpAuth
+    auth = SessionExpAuth()
 
 
 @app.before_request
-def before_request() -> None:
-    """ Before request
+def before_request():
+    """execute before each request
     """
     if auth is not None:
-        exclude_paths = ['/api/v1/status/', '/api/v1/unauthorized/',
-                         '/api/v1/forbidden/', '/api/v1/auth_session/login/']
-        require_auth = auth.require_auth(path=request.path,
-                                         excluded_paths=exclude_paths)
-        if require_auth:
-            if not auth.authorization_header(request) and not \
-               auth.session_cookie(request):
+        excluded = ['/api/v1/status/',
+                    '/api/v1/unauthorized/',
+                    '/api/v1/forbidden/',
+                    '/api/v1/auth_session/login/']
+        if auth.require_auth(request.path, excluded):
+            if (auth.authorization_header(request) is None and
+                    auth.session_cookie(request) is None):
                 abort(401)
-            if not auth.current_user(request):
+            if auth.current_user(request) is None:
                 abort(403)
             request.current_user = auth.current_user(request)
 
@@ -52,14 +53,14 @@ def not_found(error) -> str:
 
 @app.errorhandler(401)
 def unauthorized(error) -> str:
-    """ unauthorized error handler
+    """ unauthorized
     """
     return jsonify({"error": "Unauthorized"}), 401
 
 
 @app.errorhandler(403)
-def not_allowed(error) -> str:
-    """ not allowed error handler
+def forbidden(error) -> str:
+    """ Forbidden
     """
     return jsonify({"error": "Forbidden"}), 403
 
